@@ -1,0 +1,4 @@
+Weixiao article - https://www.frontiersin.org/articles/10.3389/fneur.2017.00435/full
+Dataset - https://www.kaggle.com/datasets/kmader/parkinsons-drawings
+New article - https://www.researchgate.net/publication/359710965_Diagnosis_of_Parkinson's_Disease_Using_Spiral_Test_Based_on_Pattern_Recognition
+New dataset - https://archive.ics.uci.edu/ml/datasets/Parkinson+Disease+Spiral+Drawings+Using+Digitized+Graphics+Tablet#
