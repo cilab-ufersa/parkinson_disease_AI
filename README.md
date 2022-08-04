@@ -15,6 +15,6 @@ $ pip install requirements.txt
 ```
 
 ## Dataset 
-    1. [Images](https://github.com/cilab-ufersa/parkinson-disease-AI/tree/main/data_image)
-    2. [Motion](https://github.com/cilab-ufersa/parkinson-disease-AI/tree/main/data_motion)
+   * [Images](https://github.com/cilab-ufersa/parkinson-disease-AI/tree/main/data_image)
+   * [Motion](https://github.com/cilab-ufersa/parkinson-disease-AI/tree/main/data_motion)
 
