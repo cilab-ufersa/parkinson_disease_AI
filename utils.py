@@ -11,7 +11,7 @@ def listPeopleArticle(paths, fs, testID):
                     fs (float): Frequência de amostragem.
                     testID (int): Número do teste de interesse.
 
-            Returns: listPerson (list | dataFrame): Lista de pessoas em dataFrame feito a partir de todos os paths.
+            Returns: listPerson (list): Lista de pessoas em dataFrame feito a partir de todos os paths.
     """
     listPerson = []
 
@@ -20,60 +20,130 @@ def listPeopleArticle(paths, fs, testID):
         person = pd.read_csv(path, sep=';', names=["x", "y", "z", "Pressure", 'GripAngle', 'Timestamp', 'TestID'])
         df_testID = person[person.TestID == testID].copy()
         if not df_testID.empty:
-            createNewColumns(df_testID, fs, testID)
-            listPerson.append(df_testID)
+            infos = getSegmentsInfos(df_testID, fs)
+            if len(infos) != 0:
+                listPerson.append(infos)
 
     return listPerson
 
 
-def createNewColumns(df, fs, testID):
+def getSegmentsInfos(df, fs):
     """
-    Adiciona as colunas de velocidade e deslocamento para o dataFrame df.
+    Obtem informações de distância, velocidade e pressão para cada segmento.
 
             Agrs:
                     df (dataFrame): dataFrame contendo todas as informações sobre o paciênte.
                     fs (float): Frequência de amostragem.
-                    testID (int): Número do teste de interesse.
+
+            Returns: infos (list): Lista de distância, velocidade média e pressão média para cada segmento.
     """
-    moduleDisplacement(df, testID)
-    moduleVelocity(df, fs, testID)
+    segments = segmentsTracker(df)
+    infos = np.zeros((len(segments), 3))
+    if len(segments) != 0:
+        moduleDisplacement(df, infos, segments)
+        moduleVelocity(infos, segments, fs)
+        modulePresure(df, infos, segments)
+    else:
+        pass
+
+    infos = deleteShortPath(infos)
+
+    return infos
 
 
-def moduleDisplacement(df, testID):
+def segmentsTracker(df):
     """
-    Calcula e adiciona a coluna deslocamento ao dataFrame df.
+    Obtem todos os segmentos realizados num teste.
 
             Agrs:
                     df (dataFrame): dataFrame contendo todas as informações sobre o paciênte.
-                    testID (int): Número do teste de interesse.
+
+            Returns: segments (list): Lista de segmentos informando o index de início e fim de cada segmento.
     """
-    size = df.shape[0]
-    module = np.empty(size, dtype=float)
-    x = df['x'].values.tolist()
-    y = df['y'].values.tolist()
+    indexes = df.loc[df["Pressure"] > 0].index
+    size = indexes.shape[0]
+    segments = []
+    if size == 0:
+        return segments
+    initialPoint = True
+    segment = 0
     for i in range(size):
-        if i == size - 1:
-            module[i] = 0
+        if initialPoint:
+            segment = indexes[i]
+            initialPoint = False
         else:
-            module[i] = ((x[i + 1] - x[i]) ** 2 + (y[i + 1] - y[i]) ** 2) ** (1 / 2)
-    df.insert(3, f'displacement_{testID}', module)
+            if i < size - 1:
+                if indexes[i] + 1 != indexes[i + 1]:
+                    segments.append((segment, indexes[i]))
+                    initialPoint = True
+            else:
+                segments.append((segment, indexes[i]))
+                initialPoint = True
+
+    return segments
 
 
-def moduleVelocity(df, fs, testID):
+def moduleDisplacement(df, infos, segments):
     """
-    Calcula e adiciona a coluna velocidade ao dataFrame df.
+    Obtem a distância total percorrida em cada segmento.
 
             Agrs:
                     df (dataFrame): dataFrame contendo todas as informações sobre o paciênte.
-                    testID (int): Número do teste de interesse.
+                    infos (matrix): Lista de informações(distancia percorrida, velocidade média e pressão média)
+                    segments (list | tuple): Lista de tuplas contendo os index de início e fim de um segmento.
     """
-    size = df.shape[0]
-    module = np.empty(size, dtype=float)
-    displacement = df[f"displacement_{testID}"].values.tolist()
+    size = len(segments)
+    x = df['x']
+    y = df['y']
     for i in range(size):
-        module[i] = displacement[i] * fs
+        for j in range(segments[i][0], segments[i][1]):
+            infos[i][0] += ((x[j + 1] - x[j]) ** 2 + (y[j + 1] - y[j]) ** 2) ** (1 / 2)
 
-    df[f"velocity_{testID}"] = module
+
+def moduleVelocity(infos, segments, fs):
+    """
+    Obtem a velocidade média em cada segmento.
+
+            Agrs:
+                    df (dataFrame): dataFrame contendo todas as informações sobre o paciênte.
+                    segments (list | tuple): Lista de tuplas contendo os index de início e fim de um segmento.
+                    fs (float): Frequência de amostragem.
+    """
+    size = len(segments)
+    for i in range(size):
+        infos[i][1] = fs * infos[i][0] / (segments[i][1] - segments[i][0])
+
+
+def modulePresure(df, infos, segments):
+    """
+    Obtem a pressão média em cada segmento.
+
+            Agrs:
+                    df (dataFrame): dataFrame contendo todas as informações sobre o paciênte.
+                    infos (matrix): Lista de informações(distancia percorrida, velocidade média e pressão média)
+                    segments (list | tuple): Lista de tuplas contendo os index de início e fim de um segmento.
+    """
+    size = len(segments)
+    pressure = df['Pressure']
+    for i in range(size):
+        comulative = 0
+        for j in range(segments[i][0], segments[i][1] + 1):
+            comulative += pressure[j]
+        infos[i][2] = comulative / (segments[i][1] - segments[i][0] + 1)
+
+
+def deleteShortPath(infos):
+    """
+    Remove segmentos com distância total menor que 0,5 unidades de distância.
+
+            Agrs:
+                    infos (matrix): Lista de informações(distancia percorrida, velocidade média e pressão média)
+    """
+    delete = []
+    for i in range(len(infos)):
+        if infos[i][0] == 0:
+            delete.append(i)
+    return np.delete(infos, delete, 0)
 
 
 def weightedAverage(valuesList, weightList):
@@ -91,7 +161,7 @@ def weightedAverage(valuesList, weightList):
     return average
 
 
-def createFeatures(listPerson, diagnoses, testID):
+def createFeatures(listPerson, diagnoses):
     """
     Retorna uma tupla com duas posições, na primeira posição tem o dataFrame com os atributos de cada paciente já
     calculados e na segunda posição conte uma lista com o diagnóstico real de cada paciênte.
@@ -99,7 +169,6 @@ def createFeatures(listPerson, diagnoses, testID):
             Agrs:
                     listPerson (list | dataFrame): Lista de pessoas em dataFrame.
                     diagnoses (int): Diaginóstico real dos paciêntes.
-                    testID (int): Número do teste de interesse.
 
             Returns: infos (tuple): tupla com duas posições, na primeira posição tem o dataFrame com os atributos de
             cada paciente já calculados a partir dos dados da listPerson e na segunda posição conte uma lista com o
@@ -107,8 +176,9 @@ def createFeatures(listPerson, diagnoses, testID):
     """
     table = np.empty((len(listPerson), 3))
     for i in range(len(listPerson)):
-        table[i][0] = weightedAverage(listPerson[i][f'velocity_{testID}'], listPerson[i][f'displacement_{testID}'])
-        table[i][1] = weightedAverage(listPerson[i]['Pressure'], listPerson[i][f'displacement_{testID}'])
+        transpose = listPerson[i].transpose()
+        table[i][0] = weightedAverage(transpose[1][:], transpose[0][:])
+        table[i][1] = weightedAverage(transpose[2][:], transpose[0][:])
         table[i][2] = table[i][0] * table[i][1]
     df = pd.DataFrame(data=table, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
     infos = df, np.full((len(listPerson)), fill_value=diagnoses)
