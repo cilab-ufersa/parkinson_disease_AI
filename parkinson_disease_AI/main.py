@@ -1,4 +1,5 @@
 import pickle
+from tkinter import Grid
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 if __name__ == "__main__":
 
-    dataset = pd.read_csv('../parkinson_disease_AI/dataset/listPerson.csv')
+    dataset = pd.read_csv('parkinson_disease_AI\dataset\listPerson.csv')
     listDiagnosis = dataset["Diagnosis"].to_numpy()
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
 
@@ -26,23 +27,34 @@ if __name__ == "__main__":
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=13)
 
     # KNN
-    knnc = GridSearchCV(KNeighborsClassifier(), param_grid=[
+    '''knnc = GridSearchCV(KNeighborsClassifier(), param_grid=[
         {
-            'weights': ['uniform'],
-            'n_neighbors': [i for i in range(1, 11)]
-        },
-        {
-            'weights': ['distance'],
-            'n_neighbors': [i for i in range(1, 11)],
+            'weights': ['uniform', 'distance'],
+            'n_neighbors': [i for i in range(1, 20)],
             'p': [i for i in range(1, 6)]
         }
-    ], cv=n_splits)
+    ], cv=n_splits)'''
+    '''knnc = KNeighborsClassifier(**{'n_neighbors': 17, 'p': 1, 'weights': 'distance'})
+    
+    with open('knnc.pkl', 'wb') as file:
+        pickle.dump(knnc, file)'''
+
+    with open('parkinson_disease_AI/knnc.pkl', 'rb') as file:
+        knnc = pickle.load(file)
 
     # Decision Tree
-    cartc = GridSearchCV(estimator=DecisionTreeClassifier(), param_grid={'criterion': ['gini', 'entropy', 'log_loss'],
+    '''cartc = GridSearchCV(estimator=DecisionTreeClassifier(), param_grid={'criterion': ['gini', 'entropy', 'log_loss'],
                                                                          'splitter': ["best", "random"],
-                                                                         'max_depth': np.arange(10, 30, 5)
-                                                                         }, cv=n_splits)
+                                                                         'max_depth': np.arange(10, 30, 2)
+                                                                         }, cv=n_splits)'''
+    #cartc = DecisionTreeClassifier(**{'criterion': 'entropy', 'max_depth': 20, 'splitter': 'random'})
+
+    '''with open('cartc.pkl', 'wb') as file:
+        pickle.dump(cartc, file)'''
+    
+    with open('parkinson_disease_AI/cartc.pkl', 'rb') as file:
+        cartc = pickle.load(file)
+
     # Random Forest
     """rfc = GridSearchCV(estimator=RandomForestClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
     'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
@@ -55,7 +67,7 @@ if __name__ == "__main__":
     with open('rfc_model.pkl', 'wb') as file:
         pickle.dump(rfc, file)"""
 
-    with open('../parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
+    with open('parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
         rfc = pickle.load(file)
 
     ss = StandardScaler()
@@ -105,7 +117,7 @@ if __name__ == "__main__":
             j += 1
 
     # TODO: Save the models
-
+    
     # Evaluation
     acc = np.empty(3)
     sens = np.empty(3)
@@ -149,6 +161,12 @@ if __name__ == "__main__":
     X_train = pd.DataFrame(X_train, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
     X_test = ss.transform(X_test)
     X_test = pd.DataFrame(X_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
+
+    plot_learning_curves(X_train, y_train, X_test, y_test, knnc)
+    plt.show()
+
+    plot_learning_curves(X_train, y_train, X_test, y_test, cartc)
+    plt.show()
 
     plot_learning_curves(X_train, y_train, X_test, y_test, rfc)
     plt.show()
