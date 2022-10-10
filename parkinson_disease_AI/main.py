@@ -11,6 +11,8 @@ from sklearn.ensemble import RandomForestClassifier
 from mlxtend.plotting import plot_learning_curves
 from imblearn.over_sampling import RandomOverSampler
 
+from imblearn.over_sampling import SMOTE
+
 
 
 if __name__ == "__main__":
@@ -20,12 +22,10 @@ if __name__ == "__main__":
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
 
     # Balance dataset
-    ros = RandomOverSampler() # Isso pode está causando um overfitting no modelo 
-    # verificar com detalhe como o método radomoversample trabalha
-    ros.fit(listPerson, listDiagnosis)
-    listPerson, listDiagnosis = ros.fit_resample(listPerson, listDiagnosis)
-
-    n_splits = 3
+    sm = SMOTE(random_state=13)
+    sm.fit(listPerson, listDiagnosis)
+    listPerson, listDiagnosis = sm.fit_resample(listPerson, listDiagnosis)
+    n_splits = 5
     kf = KFold(n_splits=n_splits,shuffle=True)
 
     # KNN
