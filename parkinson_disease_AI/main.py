@@ -1,5 +1,7 @@
+from distutils import errors
+from distutils.log import error
 import pickle
-from tkinter import Grid
+from tkinter import E, Grid
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -73,7 +75,8 @@ if __name__ == "__main__":
 
 
     # SVM
-    clf = SVC(kernel='linear')
+    #clf = SVC(kernel='linear')
+    clf = GridSearchCV(estimator=SVC(), param_grid={'kernel': ['linear', 'poly', 'rbf', 'sigmoid'], 'gamma': ['auto', 'scale']}, cv=n_splits)
 
     ss = StandardScaler()
     TP_TN_FP_FN = np.zeros((4, 4))
@@ -99,6 +102,8 @@ if __name__ == "__main__":
         clf_trained = clf.fit(x_train, y_train) 
 
         modelsc = [knnc_trained, cartc_trained, rfc_trained, clf_trained]
+
+        print(clf.best_params_)
 
         j = 0
         diagnosis.append(y_test[:])
