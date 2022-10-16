@@ -10,6 +10,7 @@ from sklearn.model_selection import KFold, GridSearchCV, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
 
 if __name__ == "__main__":
 
@@ -70,8 +71,12 @@ if __name__ == "__main__":
     with open('parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
         rfc = pickle.load(file)
 
+
+    # SVM
+    clf = SVC(kernel='linear')
+
     ss = StandardScaler()
-    TP_TN_FP_FN = np.zeros((3, 4))
+    TP_TN_FP_FN = np.zeros((4, 4))
 
     diagnosis = []
     guesseddiagnosisknn = []
@@ -91,8 +96,9 @@ if __name__ == "__main__":
         knnc_trained = knnc.fit(x_train, y_train)
         cartc_trained = cartc.fit(x_train, y_train)
         rfc_trained = rfc.fit(x_train, y_train)
+        clf_trained = clf.fit(x_train, y_train) 
 
-        modelsc = [knnc_trained, cartc_trained, rfc_trained]
+        modelsc = [knnc_trained, cartc_trained, rfc_trained, clf_trained]
 
         j = 0
         diagnosis.append(y_test[:])
@@ -119,24 +125,24 @@ if __name__ == "__main__":
     # TODO: Save the models
     
     # Evaluation
-    acc = np.empty(3)
-    sens = np.empty(3)
-    esp = np.empty(3)
-    for i in range(3):
+    acc = np.empty(4)
+    sens = np.empty(4)
+    esp = np.empty(4)
+    for i in range(4):
         TP, TN, FP, FN = TP_TN_FP_FN[i]
         acc[i] = ((TP + TN) / (TP + TN + FN + FP) * 100)
         sens[i] = (TP / (TP + FN) * 100)
         esp[i] = (TN / (TN + FP) * 100)
 
-    mod = ['KNN', 'DecisionTree', 'RandomForest']
+    mod = ['KNN', 'DecisionTree', 'RandomForest', 'SVM']
     nam = ['acurácia', 'sensibilidade', 'especificidade']
-    for i in range(3):
+    for i in range(4):
         print(f'{mod[i]} sua {nam[0]} é de {np.round(acc[i], 2)}%')
-    for i in range(3):
+    for i in range(4):
         print(f'{mod[i]} sua {nam[1]} é de {np.round(sens[i], 2)}%')
-    for i in range(3):
+    for i in range(4):
         print(f'{mod[i]} sua {nam[2]} é de {np.round(esp[i], 2)}%')
-
+    
     # Plots
     """
     # TODO: Verify theses instructions
@@ -169,4 +175,7 @@ if __name__ == "__main__":
     plt.show()
 
     plot_learning_curves(X_train, y_train, X_test, y_test, rfc)
+    plt.show()
+
+    plot_learning_curves(X_train, y_train, X_test, y_test, clf)
     plt.show()
