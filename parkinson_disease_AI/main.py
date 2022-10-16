@@ -10,7 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from mlxtend.plotting import plot_learning_curves
 from imblearn.over_sampling import RandomOverSampler
-
+from sklearn import svm
 from imblearn.over_sampling import SMOTE
 
 
@@ -27,6 +27,12 @@ if __name__ == "__main__":
     listPerson, listDiagnosis = sm.fit_resample(listPerson, listDiagnosis)
     n_splits = 5
     kf = KFold(n_splits=n_splits,shuffle=True)
+    
+
+
+
+    #SVM
+    
 
     # KNN
     knnc = GridSearchCV(KNeighborsClassifier(), param_grid = [
@@ -62,6 +68,7 @@ if __name__ == "__main__":
     guesseddiagnosisknn = []
     guesseddiagnosisdt = []
     guesseddiagnosisrf = []
+    guesseddiagnosisvm = []
 
     for train_index, test_index in kf.split(listPerson,y=listDiagnosis):
         
@@ -76,8 +83,12 @@ if __name__ == "__main__":
         knnc_trained = knnc.fit(x_train, y_train)
         cartc_trained = cartc.fit(x_train, y_train)
         rfc_trained = rfc.fit(x_train, y_train)  
-    
-        modelsc = [knnc_trained, cartc_trained, rfc_trained]
+        #SVM
+        clf = svm.SVC()
+        clf_trained=clf.fit(x_train, y_train) 
+   
+
+        modelsc = [knnc_trained, cartc_trained, rfc_trained,clf_trained]
 
         j = 0
         diagnosis.append(y_test[:])
@@ -87,9 +98,14 @@ if __name__ == "__main__":
                 guesseddiagnosisknn.append(model.predict(x_test))
             elif model == modelsc[1]:
                 guesseddiagnosisdt.append(model.predict(x_test))
+
+            elif model == modelsc[2]:
+                guesseddiagnosisvm.append(model.predict(x_test))  
+
             else:
                 guesseddiagnosisrf.append(model.predict(x_test))
-            
+
+
             for i in range(y_test.shape[0]):
                 if y_test[i] == 0 and predict[i] == 0:
                     TP_TN_FP_FN[j][1] +=1
@@ -103,7 +119,7 @@ if __name__ == "__main__":
     
     #TODO: Save the models
 
-
+'''
     # Evaluation
     acc = np.empty(3)
     sens = np.empty(3)
@@ -114,15 +130,15 @@ if __name__ == "__main__":
         sens[i] = ((TP)/(TP+FN)*100)
         esp[i] = ((TN)/(TN+FP)*100)
 
-    mod = ['KNN','DecisionTree','RandomForest']
+    mod = ['KNN','DecisionTree','RandomForest',"svm"]
     nam = ['acurácia','sensibilidade','especificidade']
-    for i in range(3):
+    for i in range(4):
         print(f'{mod[i]} sua {nam[0]} é de {np.round(acc[i],2)}%')
-    for i in range(3):
+    for i in range(4):
         print(f'{mod[i]} sua {nam[1]} é de {np.round(sens[i],2)}%')
-    for i in range(3):
+    for i in range(4):
         print(f'{mod[i]} sua {nam[2]} é de {np.round(esp[i],2)}%')
-
+    
 
     # Plots
 
@@ -137,3 +153,4 @@ if __name__ == "__main__":
 
     plot_learning_curves(X_train, y_train, X_test, y_test, rfc)
     plt.show()
+'''
