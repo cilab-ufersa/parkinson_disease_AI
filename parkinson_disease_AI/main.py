@@ -1,5 +1,4 @@
 import pickle
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -11,7 +10,7 @@ from sklearn.svm import SVC
 
 if __name__ == "__main__":
 
-    dataset = pd.read_csv('..\parkinson_disease_AI\dataset\listPerson.csv')
+    dataset = pd.read_csv('parkinson_disease_AI\dataset\listPerson.csv')
     listDiagnosis = dataset["Diagnosis"].to_numpy()
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
 
@@ -33,62 +32,26 @@ if __name__ == "__main__":
     kf_svm = KFold(n_splits=n_splits_svm, shuffle=True, random_state=13)
 
     # KNN
-    with open('..\parkinson_disease_AI/knnc.pkl', 'rb') as file:
+    with open('parkinson_disease_AI/knnc.pkl', 'rb') as file:
         knnc = pickle.load(file)
 
     # Decision Tree
-    with open('..\parkinson_disease_AI/cartc.pkl', 'rb') as file:
+    with open('parkinson_disease_AI/cartc.pkl', 'rb') as file:
         cartc = pickle.load(file)
 
     # Random Forest
-    with open('..\parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
+    with open('parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
         rfc = pickle.load(file)
 
     # SVM
-    # clf = SVC(kernel='linear')
     clf = GridSearchCV(estimator=SVC(),
-                       param_grid={'kernel': ['linear', 'poly', 'rbf', 'sigmoid'], 'gamma': ['auto', 'scale']},
+                       param_grid={'C':[1000, 2000], 'kernel': ['rbf'], 'gamma': [0.6, 0.7]}, 
                        cv=n_splits_svm)
+
+    #clf = SVC(kernel='rbf', C=2000, gamma=0.7)
 
     ss = StandardScaler()
     TP_TN_FP_FN = np.zeros((4, 4))
-
-    '''
-    for train_index, test_index in kf.split(listPerson, y=listDiagnosis):
-
-        x_train, x_test = listPerson.iloc[train_index], listPerson.iloc[test_index]
-        y_train, y_test = listDiagnosis[train_index], listDiagnosis[test_index]
-
-        x_train = ss.fit_transform(x_train)
-        x_train = pd.DataFrame(x_train, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
-        x_test = ss.transform(x_test)
-        x_test = pd.DataFrame(x_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
-
-        knnc_trained = knnc.fit(x_train, y_train)
-        cartc_trained = cartc.fit(x_train, y_train)
-        rfc_trained = rfc.fit(x_train, y_train)
-        clf_trained = clf.fit(x_train, y_train)
-
-        modelsc = [knnc_trained, cartc_trained, rfc_trained, clf_trained]
-
-        print(clf.best_params_)
-
-        j = 0
-        diagnosis.append(y_test[:])
-        for model in modelsc:
-            predict = model.predict(x_test)
-
-            for i in range(y_test.shape[0]):
-                if y_test[i] == 0 and predict[i] == 0:
-                    TP_TN_FP_FN[j][1] += 1
-                elif y_test[i] == 1 and predict[i] == 1:
-                    TP_TN_FP_FN[j][0] += 1
-                elif y_test[i] == 1 and predict[i] == 0:
-                    TP_TN_FP_FN[j][3] += 1
-                elif y_test[i] == 0 and predict[i] == 1:
-                    TP_TN_FP_FN[j][2] += 1
-            j += 1
-    '''
 
     # KNN
     for train_index, test_index in kf_knn.split(listPerson, y=listDiagnosis):
@@ -177,6 +140,8 @@ if __name__ == "__main__":
         x_test = pd.DataFrame(x_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
 
         clf_trained = clf.fit(x_train, y_train)
+
+        #print(clf.best_params_)
 
         predict = clf_trained.predict(x_test)
 
