@@ -10,7 +10,7 @@ from sklearn.svm import SVC
 
 if __name__ == "__main__":
 
-    dataset = pd.read_csv('parkinson_disease_AI\dataset\listPerson.csv')
+    dataset = pd.read_csv('dataset/listPerson.csv')
     listDiagnosis = dataset["Diagnosis"].to_numpy()
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
 
@@ -18,6 +18,13 @@ if __name__ == "__main__":
     sm = SMOTE(random_state=13)
     sm.fit(listPerson, listDiagnosis)
     listPerson, listDiagnosis = sm.fit_resample(listPerson, listDiagnosis)
+
+    # listPerson = listPerson.drop_duplicates()
+    # print(listPerson.iloc[132])
+    # duplicateRows = listPerson[listPerson.duplicated()]
+
+    # view duplicate rows
+    # print(duplicateRows)
 
     # n_splits = 10
     n_splits_knn = 10
@@ -45,10 +52,10 @@ if __name__ == "__main__":
 
     # SVM
     clf = GridSearchCV(estimator=SVC(),
-                       param_grid={'C':[1000, 2000], 'kernel': ['rbf'], 'gamma': [0.6, 0.7]}, 
+                       param_grid={'C': [1000, 2000], 'kernel': ['rbf'], 'gamma': [0.6, 0.7]},
                        cv=n_splits_svm)
 
-    #clf = SVC(kernel='rbf', C=2000, gamma=0.7)
+    # clf = SVC(kernel='rbf', C=2000, gamma=0.7)
 
     ss = StandardScaler()
     TP_TN_FP_FN = np.zeros((4, 4))
@@ -141,7 +148,7 @@ if __name__ == "__main__":
 
         clf_trained = clf.fit(x_train, y_train)
 
-        #print(clf.best_params_)
+        # print(clf.best_params_)
 
         predict = clf_trained.predict(x_test)
 
@@ -177,6 +184,7 @@ if __name__ == "__main__":
         print(f'{mod[i]} sua {nam[2]} é de {np.round(esp[i], 2)}%')
 
     # Plots
+    '''
     X_train, X_test, y_train, y_test = train_test_split(listPerson, listDiagnosis, test_size=1 / n_splits_knn,
                                                         random_state=13)
     X_train = ss.fit_transform(X_train)
@@ -206,6 +214,7 @@ if __name__ == "__main__":
 
     plot_learning_curves(X_train, y_train, X_test, y_test, rfc)
     plt.show()
+    '''
 
     X_train, X_test, y_train, y_test = train_test_split(listPerson, listDiagnosis, test_size=1 / n_splits_svm,
                                                         random_state=13)
