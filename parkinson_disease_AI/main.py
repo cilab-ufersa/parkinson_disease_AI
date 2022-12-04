@@ -1,15 +1,17 @@
 import pickle
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 from mlxtend.plotting import plot_learning_curves
-from sklearn.model_selection import KFold, GridSearchCV, train_test_split
+from sklearn import metrics
+from sklearn.model_selection import KFold, train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
 
 if __name__ == "__main__":
 
+    # Retrieving the dataset
     dataset = pd.read_csv('dataset/listPerson.csv')
     listDiagnosis = dataset["Diagnosis"].to_numpy()
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
@@ -19,48 +21,43 @@ if __name__ == "__main__":
     sm.fit(listPerson, listDiagnosis)
     listPerson, listDiagnosis = sm.fit_resample(listPerson, listDiagnosis)
 
-    # listPerson = listPerson.drop_duplicates()
-    # print(listPerson.iloc[132])
-    # duplicateRows = listPerson[listPerson.duplicated()]
-
-    # view duplicate rows
-    # print(duplicateRows)
-
-    # n_splits = 10
-    n_splits_knn = 10
-    n_splits_dt = 10
-    n_splits_rf = 10
+    # Splits
+    #n_splits_knn = 10
+    #n_splits_dt = 10
+    #n_splits_rf = 10
     n_splits_svm = 10
 
-    # kf = KFold(n_splits=n_splits, shuffle=True, random_state=13)
-    kf_knn = KFold(n_splits=n_splits_knn, shuffle=True, random_state=13)
-    kf_dt = KFold(n_splits=n_splits_dt, shuffle=True, random_state=13)
-    kf_rf = KFold(n_splits=n_splits_rf, shuffle=True, random_state=13)
+    # kf = KFold(n_splits=n_splits)
+    #kf_knn = KFold(n_splits=n_splits_knn, shuffle=True, random_state=13)
+    #kf_dt = KFold(n_splits=n_splits_dt, shuffle=True, random_state=13)
+    #kf_rf = KFold(n_splits=n_splits_rf, shuffle=True, random_state=13)
     kf_svm = KFold(n_splits=n_splits_svm, shuffle=True, random_state=13)
 
     # KNN
-    with open('parkinson_disease_AI/knnc.pkl', 'rb') as file:
-        knnc = pickle.load(file)
-
+    #with open('parkinson_disease_AI/knnc.pkl', 'rb') as file:
+    #    knnc = pickle.load(file)
+    ''
     # Decision Tree
-    with open('parkinson_disease_AI/cartc.pkl', 'rb') as file:
-        cartc = pickle.load(file)
+    #with open('parkinson_disease_AI/cartc.pkl', 'rb') as file:
+    #    cartc = pickle.load(file)
 
     # Random Forest
-    with open('parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
-        rfc = pickle.load(file)
+    #with open('parkinson_disease_AI/rfc_model.pkl', 'rb') as file:
+    #    rfc = pickle.load(file)
 
-    # SVM
-    clf = GridSearchCV(estimator=SVC(),
-                       param_grid={'C': [1000, 2000], 'kernel': ['rbf'], 'gamma': [0.6, 0.7]},
-                       cv=n_splits_svm)
+    # SVM Poly
+    # with open('clf_poly.pkl', 'rb') as file:
+    #    clf = pickle.load(file)
 
-    # clf = SVC(kernel='rbf', C=2000, gamma=0.7)
+    #SVM RBF
+    with open('clf_rbf.pkl', 'rb') as file:
+       clf = pickle.load(file)
 
     ss = StandardScaler()
     TP_TN_FP_FN = np.zeros((4, 4))
 
     # KNN
+    '''
     for train_index, test_index in kf_knn.split(listPerson, y=listDiagnosis):
 
         x_train, x_test = listPerson.iloc[train_index], listPerson.iloc[test_index]
@@ -134,9 +131,12 @@ if __name__ == "__main__":
                 TP_TN_FP_FN[2][3] += 1
             elif y_test[i] == 0 and predict[i] == 1:
                 TP_TN_FP_FN[2][2] += 1
+    '''
 
+
+    predicted = np.empty(listPerson.shape[0])
     # SVM
-    for train_index, test_index in kf_rf.split(listPerson, y=listDiagnosis):
+    for train_index, test_index in kf_svm.split(listPerson, y=listDiagnosis):
 
         x_train, x_test = listPerson.iloc[train_index], listPerson.iloc[test_index]
         y_train, y_test = listDiagnosis[train_index], listDiagnosis[test_index]
@@ -151,6 +151,9 @@ if __name__ == "__main__":
         # print(clf.best_params_)
 
         predict = clf_trained.predict(x_test)
+
+        for i, index in enumerate(test_index):
+            predicted[index] = clf_trained.decision_function(x_test)[i]
 
         for i in range(y_test.shape[0]):
             if y_test[i] == 0 and predict[i] == 0:
@@ -224,4 +227,12 @@ if __name__ == "__main__":
     X_test = pd.DataFrame(X_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
 
     plot_learning_curves(X_train, y_train, X_test, y_test, clf)
+    plt.show()
+
+    #ROC
+
+    fpr, tpr, thresholds = metrics.roc_curve(listDiagnosis, predicted)
+    auc = metrics.auc(fpr, tpr)
+    display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name = 'SVM')
+    display.plot()
     plt.show()
