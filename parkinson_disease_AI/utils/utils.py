@@ -219,3 +219,7 @@ def addNoise(dataset, n):
 
     dfnewdata = pd.DataFrame(newdata, columns=['velocityWeighted', 'pressureWeighted', 'CISP', 'Diagnosis'])
     return pd.concat([dataset, dfnewdata])
+
+
+def to_csv(dataset):
+    dataset.to_csv('parkinson_disease_AI\dataset\expanded_data.csv', index=False)

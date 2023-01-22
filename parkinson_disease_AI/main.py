@@ -9,14 +9,16 @@ from sklearn import metrics
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from parkinson_disease_AI.utils import addNoise
+from utils import addNoise, to_csv
 
 if __name__ == "__main__":
 
     # Retrieving the dataset
-    dataset = pd.read_csv('dataset/listPerson.csv')
+    dataset = pd.read_csv('parkinson_disease_AI\dataset\expanded_data.csv')
 
-    dataset = addNoise(dataset, 4000)
+    # Saving a new expanded DataFrame with 8000 data at "parkinson_disease_AI\dataset\expanded_data.csv"
+    # dataset = addNoise(dataset, 4000)
+    # to_csv(dataset)
 
     listDiagnosis = dataset["Diagnosis"].to_numpy()
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
