@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pandas as pd
 
@@ -183,3 +185,37 @@ def createFeatures(listPerson, diagnoses):
     df = pd.DataFrame(data=table, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
     infos = df, np.full((len(listPerson)), fill_value=diagnoses)
     return infos
+
+def addNoise(dataset, n):
+
+    dfh = dataset[dataset['Diagnosis'] == 0]
+    dfpd = dataset[dataset['Diagnosis'] == 1]
+
+    stdh = dfh.std()
+    stdpd = dfpd.std()
+
+    newh = np.zeros((n - len(dfh),4))
+    for i in range(len(dfh),n):
+        sample = dfh.sample().to_numpy()
+        for j in range(len(stdh)):
+            num = sample[0][j] + stdh[j] * random.uniform(-1, 1)
+            if num >= 0:
+                newh[i - len(dfh)][j] = num
+            else:
+                newh[i - len(dfh)][j] = -num
+
+    newpd = np.zeros((n - len(dfpd), 4))
+    for i in range(len(dfpd), n):
+        sample = dfpd.sample().to_numpy()
+        for j in range(len(stdpd)):
+            num = sample[0][j] + stdpd[j] * random.uniform(-1, 1)
+            if num >= 0:
+                newpd[i - len(dfpd)][j] = num
+            else:
+                newpd[i - len(dfpd)][j] = -num
+
+
+    newdata = np.concatenate((newh, newpd))
+
+    dfnewdata = pd.DataFrame(newdata, columns=['velocityWeighted', 'pressureWeighted', 'CISP', 'Diagnosis'])
+    return pd.concat([dataset, dfnewdata])
