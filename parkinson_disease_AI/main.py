@@ -9,6 +9,11 @@ from sklearn import metrics
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import GridSearchCV
+
 from utils import addNoise, to_csv
 
 if __name__ == "__main__":
@@ -41,23 +46,32 @@ if __name__ == "__main__":
     kf_svm = KFold(n_splits=n_splits_svm, shuffle=True, random_state=13)
 
     # KNN
-    with open('knnc.pkl', 'rb') as file:
-        knnc = pickle.load(file)
-    '''
+    knnc = GridSearchCV(estimator=KNeighborsClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
+                'criterion': ['gini', 'entropy', 'log_loss'],	    'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
+                'max_features':  ['sqrt', 'log2'],	    'max_depth': np.arange(10, 30, 5)}, cv=3)
+    # with open('parkinson_disease_AI\knnc.pkl', 'rb') as file:
+    #     knnc = pickle.load(file)
+    
     # Decision Tree
-    with open('cartc.pkl', 'rb') as file:
-        cartc = pickle.load(file)
+    cartc = GridSearchCV(estimator=DecisionTreeClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
+                'criterion': ['gini', 'entropy', 'log_loss'],	    'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
+                'max_features':  ['sqrt', 'log2'],	    'max_depth': np.arange(10, 30, 5)}, cv=3)
+    # with open('cartc.pkl', 'rb') as file:
+    #     cartc = pickle.load(file)
 
-    # Random Forest
-    with open('rfc_model.pkl', 'rb') as file:
-        rfc = pickle.load(file)
+    # # Random Forest
+    rfc = GridSearchCV(estimator=RandomForestClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
+                'criterion': ['gini', 'entropy', 'log_loss'],	    'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
+                'max_features':  ['sqrt', 'log2'],	    'max_depth': np.arange(10, 30, 5)}, cv=3)
+    # with open('rfc_model.pkl', 'rb') as file:
+    #     rfc = pickle.load(file)
 
-    # SVM Poly
-    with open('clf_poly.pkl', 'rb') as file:
-        clf = pickle.load(file)
-    '''
+    # # SVM Poly
+    # with open('clf_poly.pkl', 'rb') as file:
+    #     clf = pickle.load(file)
+
     #SVM RBF
-    with open('clf_rbf.pkl', 'rb') as file:
+    with open('parkinson_disease_AI\clf_rbf.pkl', 'rb') as file:
        clf = pickle.load(file)
 
 
