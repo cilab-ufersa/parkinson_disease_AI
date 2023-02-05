@@ -194,26 +194,35 @@ def addNoise(dataset, n):
     stdh = dfh.std()
     stdpd = dfpd.std()
 
+    meanh = dfh.median()
+    meanpd = dfpd.median()
+
+    weighth = 1/(1+abs(dfh.copy() - meanh))
+    weightpd = 1 / (1+abs(dfpd.copy() - meanpd))
+
     newh = np.zeros((n - len(dfh),4))
     for i in range(len(dfh),n):
-        sample = dfh.sample().to_numpy()
-        for j in range(len(stdh)):
+        for j in range(len(stdh) - 2):
+            sample = dfh.sample(weights=weighth[weighth.columns[j]]).to_numpy()
             num = sample[0][j] + stdh[j] * random.uniform(-1, 1)
             if num >= 0:
                 newh[i - len(dfh)][j] = num
             else:
                 newh[i - len(dfh)][j] = -num
+        newh[i - len(dfh)][2] = np.absolute(newh[i - len(dfh)][0]) * np.absolute(newh[i - len(dfh)][1])
 
-    newpd = np.zeros((n - len(dfpd), 4))
+    newpd = np.ones((n - len(dfpd), 4))
     for i in range(len(dfpd), n):
-        sample = dfpd.sample().to_numpy()
-        for j in range(len(stdpd)):
+        #while sample[0][0] < 150 and sample[0][1] > 800:
+        #    sample = dfpd.sample().to_numpy()
+        for j in range(len(stdpd) - 2):
+            sample = dfpd.sample(weights=weightpd[weightpd.columns[j]]).to_numpy()
             num = sample[0][j] + stdpd[j] * random.uniform(-1, 1)
             if num >= 0:
                 newpd[i - len(dfpd)][j] = num
             else:
                 newpd[i - len(dfpd)][j] = -num
-
+        newpd[i - len(dfpd)][2] = np.absolute(newpd[i - len(dfpd)][0]) * np.absolute(newpd[i - len(dfpd)][1])
 
     newdata = np.concatenate((newh, newpd))
 
@@ -221,5 +230,5 @@ def addNoise(dataset, n):
     return pd.concat([dataset, dfnewdata])
 
 
-def to_csv(dataset):
-    dataset.to_csv('parkinson_disease_AI\dataset\expanded_data.csv', index=False)
+def to_csv(dataset, name):
+    dataset.to_csv(f'../dataset/{name}.csv', index=False)

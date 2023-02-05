@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
 
@@ -19,8 +20,8 @@ from utils import addNoise, to_csv
 if __name__ == "__main__":
 
     # Retrieving the dataset
-    dataset = pd.read_csv('parkinson_disease_AI\dataset\expanded_data.csv')
-
+    # dataset = pd.read_csv('parkinson_disease_AI\dataset\expanded_data.csv')
+    dataset = pd.read_csv('./dataset/testingdataset.csv')
     # Saving a new expanded DataFrame with 8000 data at "parkinson_disease_AI\dataset\expanded_data.csv"
     # dataset = addNoise(dataset, 4000)
     # to_csv(dataset)
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     #n_splits_knn = 10
     #n_splits_dt = 10
     #n_splits_rf = 10
-    n_splits_svm = 10
+    n_splits_svm = 3
 
     # kf = KFold(n_splits=n_splits)
     #kf_knn = KFold(n_splits=n_splits_knn, shuffle=True, random_state=13)
@@ -46,33 +47,38 @@ if __name__ == "__main__":
     kf_svm = KFold(n_splits=n_splits_svm, shuffle=True, random_state=13)
 
     # KNN
-    knnc = GridSearchCV(estimator=KNeighborsClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
-                'criterion': ['gini', 'entropy', 'log_loss'],	    'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
-                'max_features':  ['sqrt', 'log2'],	    'max_depth': np.arange(10, 30, 5)}, cv=3)
+    #knnc = GridSearchCV(estimator=KNeighborsClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2),
+    #                                                                  'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False],
+    #                                                                  'max_depth': np.arange(10, 30, 5)}, cv=3)
     # with open('parkinson_disease_AI\knnc.pkl', 'rb') as file:
     #     knnc = pickle.load(file)
     
     # Decision Tree
-    cartc = GridSearchCV(estimator=DecisionTreeClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
-                'criterion': ['gini', 'entropy', 'log_loss'],	    'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
-                'max_features':  ['sqrt', 'log2'],	    'max_depth': np.arange(10, 30, 5)}, cv=3)
+    #cartc = GridSearchCV(estimator=DecisionTreeClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2),
+    #                                                                     'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False],
+    #                                                                     'max_depth': np.arange(10, 30, 5)}, cv=3)
     # with open('cartc.pkl', 'rb') as file:
     #     cartc = pickle.load(file)
 
     # # Random Forest
-    rfc = GridSearchCV(estimator=RandomForestClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2), 
-                'criterion': ['gini', 'entropy', 'log_loss'],	    'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False], 
-                'max_features':  ['sqrt', 'log2'],	    'max_depth': np.arange(10, 30, 5)}, cv=3)
+    #rfc = GridSearchCV(estimator=RandomForestClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2),
+    #                                                                   'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False],
+    #                                                                   'max_depth': np.arange(10, 30, 5)}, cv=3)
     # with open('rfc_model.pkl', 'rb') as file:
     #     rfc = pickle.load(file)
 
     # # SVM Poly
-    # with open('clf_poly.pkl', 'rb') as file:
-    #     clf = pickle.load(file)
+    #with open('clf_poly.pkl', 'rb') as file:
+    #    clf = pickle.load(file)
+    #clf = GridSearchCV(estimator=SVC(),
+    #                   param_grid={'C': [1500], 'kernel': ['rbf'], 'gamma': [1]},
+    #                   cv=n_splits_svm)
+
+    clf = SVC(C = 2000, kernel= 'poly', gamma= 0.9, coef0=1/2, degree =3)
 
     #SVM RBF
-    with open('parkinson_disease_AI\clf_rbf.pkl', 'rb') as file:
-       clf = pickle.load(file)
+    #with open('clf_rbf.pkl', 'rb') as file:
+    #   clf = pickle.load(file)
 
 
     ss = StandardScaler()
@@ -168,7 +174,7 @@ if __name__ == "__main__":
 
         clf_trained = clf.fit(x_train, y_train)
 
-        # print(clf.best_params_)
+        #print(clf.best_params_)
 
         predict = clf_trained.predict(x_test)
 
