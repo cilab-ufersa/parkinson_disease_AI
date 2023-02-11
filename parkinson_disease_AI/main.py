@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Retrieving the dataset
     # dataset = pd.read_csv('parkinson_disease_AI\dataset\expanded_data.csv')
-    dataset = pd.read_csv('./dataset/testingdataset.csv')
+    dataset = pd.read_csv('parkinson_disease_AI/dataset/testingdataset.csv')
     # Saving a new expanded DataFrame with 8000 data at "parkinson_disease_AI\dataset\expanded_data.csv"
     # dataset = addNoise(dataset, 4000)
     # to_csv(dataset)
@@ -37,14 +37,14 @@ if __name__ == "__main__":
     # Splits
     #n_splits_knn = 10
     #n_splits_dt = 10
-    #n_splits_rf = 10
-    n_splits_svm = 3
+    n_splits_rf = 3
+    #n_splits_svm = 3
 
     # kf = KFold(n_splits=n_splits)
     #kf_knn = KFold(n_splits=n_splits_knn, shuffle=True, random_state=13)
     #kf_dt = KFold(n_splits=n_splits_dt, shuffle=True, random_state=13)
-    #kf_rf = KFold(n_splits=n_splits_rf, shuffle=True, random_state=13)
-    kf_svm = KFold(n_splits=n_splits_svm, shuffle=True, random_state=13)
+    kf_rf = KFold(n_splits=n_splits_rf, shuffle=True, random_state=13)
+    #kf_svm = KFold(n_splits=n_splits_svm, shuffle=True, random_state=13)
 
     # KNN
     #knnc = GridSearchCV(estimator=KNeighborsClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2),
@@ -60,10 +60,8 @@ if __name__ == "__main__":
     # with open('cartc.pkl', 'rb') as file:
     #     cartc = pickle.load(file)
 
-    # # Random Forest
-    #rfc = GridSearchCV(estimator=RandomForestClassifier(), param_grid={'n_estimators': np.arange(6, 16, 2),
-    #                                                                   'criterion': ['gini', 'entropy', 'log_loss'], 'max_features': ['sqrt', 'log2'], 'bootstrap': [True, False],
-    #                                                                   'max_depth': np.arange(10, 30, 5)}, cv=3)
+    # Random Forest
+    rfc = RandomForestClassifier(n_estimators=5, criterion='gini', max_features='sqrt')
     # with open('rfc_model.pkl', 'rb') as file:
     #     rfc = pickle.load(file)
 
@@ -74,7 +72,7 @@ if __name__ == "__main__":
     #                   param_grid={'C': [1500], 'kernel': ['rbf'], 'gamma': [1]},
     #                   cv=n_splits_svm)
 
-    clf = SVC(C = 2000, kernel= 'poly', gamma= 0.9, coef0=1/2, degree =3)
+    # clf = SVC(C = 2000, kernel= 'poly', gamma= 0.9, coef0=1/2, degree =3)
 
     #SVM RBF
     #with open('clf_rbf.pkl', 'rb') as file:
@@ -133,7 +131,7 @@ if __name__ == "__main__":
             elif y_test[i] == 1 and predict[i] == 0:
                 TP_TN_FP_FN[1][3] += 1
             elif y_test[i] == 0 and predict[i] == 1:
-                TP_TN_FP_FN[1][2] += 1
+                TP_TN_FP_FN[1][2] += 1'''
     
     # Random Forest
     for train_index, test_index in kf_rf.split(listPerson, y=listDiagnosis):
@@ -159,10 +157,10 @@ if __name__ == "__main__":
                 TP_TN_FP_FN[2][3] += 1
             elif y_test[i] == 0 and predict[i] == 1:
                 TP_TN_FP_FN[2][2] += 1
-    '''
+    
     predicted = np.empty(listPerson.shape[0])
     # SVM
-    for train_index, test_index in kf_svm.split(listPerson, y=listDiagnosis):
+    '''for train_index, test_index in kf_svm.split(listPerson, y=listDiagnosis):
 
         x_train, x_test = listPerson.iloc[train_index], listPerson.iloc[test_index]
         y_train, y_test = listDiagnosis[train_index], listDiagnosis[test_index]
@@ -189,7 +187,7 @@ if __name__ == "__main__":
             elif y_test[i] == 1 and predict[i] == 0:
                 TP_TN_FP_FN[3][3] += 1
             elif y_test[i] == 0 and predict[i] == 1:
-                TP_TN_FP_FN[3][2] += 1
+                TP_TN_FP_FN[3][2] += 1'''
 
     # TODO: Save the models
 
@@ -232,7 +230,7 @@ if __name__ == "__main__":
     X_test = pd.DataFrame(X_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
 
     plot_learning_curves(X_train, y_train, X_test, y_test, cartc)
-    plt.show()
+    plt.show()'''
 
     X_train, X_test, y_train, y_test = train_test_split(listPerson, listDiagnosis, test_size=1 / n_splits_rf,
                                                         random_state=13)
@@ -253,10 +251,9 @@ if __name__ == "__main__":
     X_test = pd.DataFrame(X_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
 
     plot_learning_curves(X_train, y_train, X_test, y_test, clf)
-    plt.show()
+    plt.show()'''
 
     #ROC
-
     fpr, tpr, thresholds = metrics.roc_curve(listDiagnosis, predicted)
     auc = metrics.auc(fpr, tpr)
     display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name = 'SVM')
