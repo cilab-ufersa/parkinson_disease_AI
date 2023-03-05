@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Splits
     #n_splits_knn = 10
     #n_splits_dt = 10
-    n_splits_rf = 3
+    n_splits_rf = 5
     #n_splits_svm = 3
 
     # kf = KFold(n_splits=n_splits)
@@ -61,7 +61,20 @@ if __name__ == "__main__":
     #     cartc = pickle.load(file)
 
     # Random Forest
-    rfc = RandomForestClassifier(n_estimators=5, criterion='gini', max_features='sqrt')
+    #rfc = RandomForestClassifier(criterion='log_loss', max_features='log2', n_estimators=500, class_weight='balanced_subsample')
+    rfc = GridSearchCV(estimator=RandomForestClassifier(), param_grid={
+                                                                        'criterion': ['log_loss', 'gini', 'entropy'],
+                                                                        'n_estimators': [10, 50, 100, 500],
+                                                                        'max_features': ['sqrt', 'log2', None],
+                                                                        'class_weight': ['balanced', 'balanced_subsample'],       
+                                                                        'max_depth': [None, 1, 10, 50, 100, 150, 200],
+                                                                        #  'min_samples_split': [1, 2, 5, 10, 50],
+                                                                        #  'min_samples_leaf': [1, 2, 5, 10, 50],
+                                                                        #  'bootstrap': [True, False],
+                                                                        #  'oob_score': [True, False],
+                                                                        #  'verbose': [0, 1, 3, 5]
+                                                                        })
+
     # with open('rfc_model.pkl', 'rb') as file:
     #     rfc = pickle.load(file)
 
@@ -157,6 +170,8 @@ if __name__ == "__main__":
                 TP_TN_FP_FN[2][3] += 1
             elif y_test[i] == 0 and predict[i] == 1:
                 TP_TN_FP_FN[2][2] += 1
+
+            print(rfc.best_params_)
     
     predicted = np.empty(listPerson.shape[0])
     # SVM
@@ -256,6 +271,6 @@ if __name__ == "__main__":
     #ROC
     fpr, tpr, thresholds = metrics.roc_curve(listDiagnosis, predicted)
     auc = metrics.auc(fpr, tpr)
-    display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name = 'SVM')
+    display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name = 'RandomForestClassifier')
     display.plot()
     plt.show()
