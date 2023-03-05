@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def listPeopleArticle(paths, fs, testID):
+def listPeopleArticle(paths, testID):
     """
     Retorna uma lista de paciêntes em dataFrame com a adição da coluna de velocidades e deslocamento.
 
@@ -22,14 +22,14 @@ def listPeopleArticle(paths, fs, testID):
         person = pd.read_csv(path, sep=';', names=["x", "y", "z", "Pressure", 'GripAngle', 'Timestamp', 'TestID'])
         df_testID = person[person.TestID == testID].copy()
         if not df_testID.empty:
-            infos = getSegmentsInfos(df_testID, fs)
+            infos = getSegmentsInfos(df_testID)
             if len(infos) != 0:
                 listPerson.append(infos)
 
     return listPerson
 
 
-def getSegmentsInfos(df, fs):
+def getSegmentsInfos(df):
     """
     Obtem informações de distância, velocidade e pressão para cada segmento.
 
@@ -43,7 +43,7 @@ def getSegmentsInfos(df, fs):
     infos = np.zeros((len(segments), 3))
     if len(segments) != 0:
         moduleDisplacement(df, infos, segments)
-        moduleVelocity(infos, segments, fs)
+        moduleVelocity(df, infos, segments)
         modulePresure(df, infos, segments)
     else:
         pass
@@ -102,7 +102,7 @@ def moduleDisplacement(df, infos, segments):
             infos[i][0] += ((x[j + 1] - x[j]) ** 2 + (y[j + 1] - y[j]) ** 2) ** (1 / 2)
 
 
-def moduleVelocity(infos, segments, fs):
+def moduleVelocity(df, infos, segments):
     """
     Obtem a velocidade média em cada segmento.
 
@@ -112,8 +112,12 @@ def moduleVelocity(infos, segments, fs):
                     fs (float): Frequência de amostragem.
     """
     size = len(segments)
+    times = df['Timestamp']
     for i in range(size):
-        infos[i][1] = fs * infos[i][0] / (segments[i][1] - segments[i][0])
+        timeInit = times[segments[i][0]]
+        timeFinal = times[segments[i][1]]
+        deltatime = (timeFinal - timeInit) / 1000
+        infos[i][1] = infos[i][0] / deltatime
 
 
 def modulePresure(df, infos, segments):
@@ -143,7 +147,7 @@ def deleteShortPath(infos):
     """
     delete = []
     for i in range(len(infos)):
-        if infos[i][0] == 0:
+        if infos[i][0] <= 0.5:
             delete.append(i)
     return np.delete(infos, delete, 0)
 
@@ -186,43 +190,35 @@ def createFeatures(listPerson, diagnoses):
     infos = df, np.full((len(listPerson)), fill_value=diagnoses)
     return infos
 
-def addNoise(dataset, n):
 
+def addNoise(dataset, n):
     dfh = dataset[dataset['Diagnosis'] == 0]
     dfpd = dataset[dataset['Diagnosis'] == 1]
 
     stdh = dfh.std()
     stdpd = dfpd.std()
 
-    meanh = dfh.median()
-    meanpd = dfpd.median()
-
-    weighth = 1/(1+abs(dfh.copy() - meanh))
-    weightpd = 1 / (1+abs(dfpd.copy() - meanpd))
-
-    newh = np.zeros((n - len(dfh),4))
-    for i in range(len(dfh),n):
+    newh = np.zeros((n - len(dfh), 4))
+    for i in range(len(dfh), n):
+        sample = dfh.sample().to_numpy()
         for j in range(len(stdh) - 2):
-            sample = dfh.sample(weights=weighth[weighth.columns[j]]).to_numpy()
             num = sample[0][j] + stdh[j] * random.uniform(-1, 1)
             if num >= 0:
                 newh[i - len(dfh)][j] = num
             else:
                 newh[i - len(dfh)][j] = -num
-        newh[i - len(dfh)][2] = np.absolute(newh[i - len(dfh)][0]) * np.absolute(newh[i - len(dfh)][1])
+        newh[i - len(dfh)][2] = newh[i - len(dfh)][0] * newh[i - len(dfh)][1]
 
     newpd = np.ones((n - len(dfpd), 4))
     for i in range(len(dfpd), n):
-        #while sample[0][0] < 150 and sample[0][1] > 800:
-        #    sample = dfpd.sample().to_numpy()
+        sample = dfpd.sample().to_numpy()
         for j in range(len(stdpd) - 2):
-            sample = dfpd.sample(weights=weightpd[weightpd.columns[j]]).to_numpy()
             num = sample[0][j] + stdpd[j] * random.uniform(-1, 1)
             if num >= 0:
                 newpd[i - len(dfpd)][j] = num
             else:
                 newpd[i - len(dfpd)][j] = -num
-        newpd[i - len(dfpd)][2] = np.absolute(newpd[i - len(dfpd)][0]) * np.absolute(newpd[i - len(dfpd)][1])
+        newpd[i - len(dfpd)][2] = newpd[i - len(dfpd)][0] * newpd[i - len(dfpd)][1]
 
     newdata = np.concatenate((newh, newpd))
 
