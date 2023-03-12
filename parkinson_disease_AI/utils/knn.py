@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 
 # Read data
-dataset = pd.read_csv('../dataset/testingdataset.csv')
+dataset = pd.read_csv('../dataset/expanded_data.csv')
 listDiagnosis = dataset["Diagnosis"].to_numpy()
 listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
 
@@ -23,7 +23,7 @@ kf_knn = KFold(n_splits=n_splits_knn, shuffle=True, random_state=13)
 #                                'algorithm': ['auto'],
 #                                'p': np.arange(1, 11)},
 #                    cv=n_splits_knn)
-knnc = KNeighborsClassifier(n_neighbors=60, p=2)
+knnc = KNeighborsClassifier(n_neighbors=59, p=2)
 
 # with open('parkinson_disease_AI\knnc.pkl', 'rb') as file:
 #    knnc = pickle.load(file)
