@@ -108,7 +108,7 @@ for train_index, test_index in kf_knn.split(listPerson, y=listDiagnosis):
         elif y_test[i] == 0 and predict[i] == 1:
             TP_TN_FP_FN[2] += 1
 
-    # predicted[test_index] = cartc_trained.predict_proba(x_test)
+    predicted[test_index] = cartc_trained.predict_proba(x_test)
 
 # Evaluation
 TP, TN, FP, FN = TP_TN_FP_FN
