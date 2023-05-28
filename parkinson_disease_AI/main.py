@@ -22,13 +22,14 @@ from utils import addNoise, to_csv
 if __name__ == "__main__":
 
     # Retrieving the dataset
-    dataset = pd.read_csv('parkinson_disease_AI/dataset/testingdataset.csv')
+    dataset = pd.read_csv('parkinson_disease_AI/dataset/listPersonRefactor.csv')
 
     listDiagnosis = dataset["Diagnosis"].to_numpy()
     listPerson = dataset[["velocityWeighted", "pressureWeighted", "CISP"]]
 
     # Pycaret
-    # exp_clf = setup(data=dataset, target='Diagnosis', train_size=0.95, data_split_shuffle=True)
+    # exp_clf = setup(data=dataset, target='Diagnosis', train_size=0.8, data_split_shuffle=True)
+    # compare_models()
     # gbc = create_model('gbc')
     # tuned_gbc = tune_model(gbc)
     # evaluate_model(tuned_gbc)
@@ -100,7 +101,18 @@ if __name__ == "__main__":
     #with open('clf_rbf.pkl', 'rb') as file:
     #   clf = pickle.load(file)
 
-    gbc = GradientBoostingClassifier(n_estimators=100, max_depth=3, random_state=13)
+    # gbc = GradientBoostingClassifier(learning_rate=0.01, max_depth=7, max_features='sqrt', min_samples_leaf=1, min_samples_split=10, n_estimators=130)
+    # gbc = GradientBoostingClassifier(learning_rate=0.07, max_depth=3, max_features='sqrt', min_samples_leaf=4, min_samples_split=2, n_estimators=45)
+    gbc = GradientBoostingClassifier(learning_rate=0.04, max_depth=7, max_features='sqrt', min_samples_leaf=10, min_samples_split=6, n_estimators=47)
+
+    # gbc = GridSearchCV(estimator=GradientBoostingClassifier(), param_grid = {
+    #                                                                         'n_estimators': [30, 40, 50, 30, 60, 70, 80],
+    #                                                                         'learning_rate': [0.1, 0.05, 0.01, 0.5, 0.03, 0.3, 1],
+    #                                                                         'max_depth': [1, 2, 3, 4, 5, 6, 7, 10, 12],
+    #                                                                         'min_samples_split': [1, 2, 3, 4, 5, 6, 8, 10, 15],
+    #                                                                         'min_samples_leaf': [1, 2, 3, 4, 5, 6, 10],
+    #                                                                         'max_features': ['sqrt']
+    #                                                                          })
 
     ss = StandardScaler()
     TP_TN_FP_FN = np.zeros((5, 4))
@@ -227,8 +239,8 @@ if __name__ == "__main__":
         x_test = ss.transform(x_test)
         x_test = pd.DataFrame(x_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
 
-        clf_trained = gbc.fit(x_train, y_train)
-        predict = clf_trained.predict(x_test)
+        gbc_trained = gbc.fit(x_train, y_train)
+        predict = gbc_trained.predict(x_test)
 
         # for i, index in enumerate(test_index):
         #     predicted[index] = clf_trained.decision_function(x_test)[i]
@@ -242,6 +254,8 @@ if __name__ == "__main__":
                 TP_TN_FP_FN[4][3] += 1
             elif y_test[i] == 0 and predict[i] == 1:
                 TP_TN_FP_FN[4][2] += 1   
+            
+            # print(gbc.best_params_)
 
     # TODO: Save the models
 
@@ -305,6 +319,16 @@ if __name__ == "__main__":
 
     # plot_learning_curves(X_train, y_train, X_test, y_test, clf)
     # plt.show()
+
+    X_train, X_test, y_train, y_test = train_test_split(listPerson, listDiagnosis, test_size=1 / n_splits_gbc,
+                                                        random_state=13)
+    X_train = ss.fit_transform(X_train)
+    X_train = pd.DataFrame(X_train, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
+    X_test = ss.transform(X_test)
+    X_test = pd.DataFrame(X_test, columns=['velocityWeighted', 'pressureWeighted', 'CISP'])
+
+    plot_learning_curves(X_train, y_train, X_test, y_test, gbc)
+    plt.show()
 
     # #ROC
     # fpr, tpr, thresholds = metrics.roc_curve(listDiagnosis, predicted)
